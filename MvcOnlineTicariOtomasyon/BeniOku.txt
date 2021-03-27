@@ -1,0 +1,665 @@
+﻿
+
+* Uruns tablosuna ürün eklendikten sonra Stok değerini otomatik olarak arttıran trigger tanımı
+
+update tablo1 set stok=(select count(stok) from Uruns)
+
+
+--ürün eklendiğinde stoğu +1 arttıran trigger
+Create Trigger Arttır
+On Uruns
+After Insert
+As
+Update TABLO1 Set Stok=Stok+1
+
+***********************************************
+
+/**************** Triggerlar *****************************/
+
+* Satış yapıldıktan sonra Uruns tablosundaki Stok değerini otomatik olarak azaltan trigger
+
+--ürün satış yapıldıktan sonra stoğu azaltan trigger
+Create Trigger SatisStokAzalt
+On SatisHarekets
+After insert
+as
+Declare @Urunid int
+Declare @Adet int
+Select @Urunid=Urunid,@Adet=Adet from inserted
+Update Uruns set Stok=Stok-@Adet where Urunid=@Urunid
+
+* Faturaların toplam tutarını otomatık arttıran trigger
+
+Create Trigger TUTAREKLE
+On FaturaKalems
+After Insert
+As
+Declare @Faturaid int
+Declare @Tutar decimal(18,2)
+Select @Faturaid=faturaid,@Tutar=tutar from inserted
+Update Faturalars set Toplam=Toplam+@Tutar where Faturaid=@Faturaid
+
+********************************
+
+/********************* Sweet Alert **********************/
+
+=> Sweet Alert'i daha iyi anlamak ve kullanmak için Alertler Controller tanımladık.
+
+/******** Galeri sayfası *******/
+
+=> Galeri sayfası için thumber klasörü içerisindekiler kullanıldı
+
+*********************************************************
+
+
+/***************** QR kod dll dosyasını ekleme **********/
+
+=> Reference/AddReference/Browse seç ardından qr kodun dll dosyasını bul ve çift tıkla
+
+
+=> QR Controller oluşturuldu
+
+*************************************************************
+
+
+
+/************* UrunDetay COntrolleri *************************/
+
+=> UrunDetayController'ı için AdminLTE teması kullanıldı. UrunDetay Controller'ı kullanıcıya görünecek Admin olmayan kısım için planlandı.
+
+=> Detay.cs sınıfında ürünler ile ilgili detayların gösterilmesi için gerekli bilgiler tanımlandı
+
+=> Class1.cs sınıfında birden fazla modelden veri alabilmek için tanımlama yaptık
+
+=> SinifGrup.cs sınıfında bir şehirde kaç adet müşteri olduğunu bulmak için gerekli veriler tanımlandı.
+
+
+/************ Authentication *************************/
+
+=> Solution içindeki Web.config dosyasının içerisindeki SystemWeb içerisine aşağıdaki kodu ekleyerek yetkisi olmayan kullanıcıların sisteme girmeden login sayfasına yönlerdime işlemi için aşağıdaki kod eklenir
+
+<authentication mode="Forms">
+      <forms loginUrl="/Login/Index"></forms>
+    </authentication>
+
+    /********* Sayfalama ************************/
+
+    =>Sayfalama işlemleri için PagedList.Mvc paketini nuget üzerinden indir.
+
+    *****************************************************
+
+
+    /***************** Grafik Çizme *************************/
+
+    => Google chart'ları kullanabilmek için nuget üzerinden Newtonsoft.Json dosyasını indir.
+
+    *****************************************************
+
+    /*************** Hata Sayfaları Yapımı ***************/
+
+    => ErrorController oluştur ve içerisine hata sayfalarını kodla
+
+    => WbCOnfig alanının systemweb altında aşağıdaki kodu ekleyerek hata sayfalarının değerlerini ayarlayıp hatalı sayfa girişlerinde sayfa bulamayınca ilgili kodların çalıştırılması sağlandı
+
+    <customErrors mode="On">
+      <error statusCode="404" redirect="/Error/Page404"></error>
+      <error statusCode="403" redirect="/Error/Page403"></error>
+    </customErrors>
+
+    /*************** Controller Üzerinden Authorize ************/
+
+    =>Controller'lar üzerinde Authorize vermek için GlobalAssacx içerisine aşağıdaki kodu eklemek yeterlidir.
+
+            GlobalFilters.Filters.Add(new AuthorizeAttribute());
+
+ *****************************************************************
+
+ /***************** Bağlı DropdownList Script Kodu ***********/
+
+ <script>
+
+    $(function () {
+
+        $('#DrpSehir').change(function () {
+
+            var id = $('#DrpSehir').val();
+
+            $.ajax({
+
+                url: '/Home/ilcegetir',
+
+                data: { p: id },
+
+                type: "POST",
+
+                dataType: "Json",
+
+                success: function (data) {
+
+                    console.log(data);
+
+                    $('#Drpilce').empty();
+
+                    for (var i = 0; i < data.length; i++) {
+
+                        $('#Drpilce').append("<option value='" + data[i].Value + "'>" + data[i].Text + "</Option>");
+
+                    }
+
+                }
+
+            });
+
+        });
+
+    });
+
+</script>
+
+****************************************************************
+
+/************* Fatura View Scrip Kodları ********************/
+
+=> Adım 1
+
+@model IEnumerable<WebApplication16.Models.TblMusteri>
+
+
+
+@{
+
+    ViewBag.Title = "Index";
+
+}
+
+
+
+<br /><br />
+
+<div class="panel panel-default">
+
+    <div class="panel-heading">
+
+        <div class="row">
+
+            <h2 class="panel-title pull-left" style="margin-left:10px;">
+
+                <strong>Order Details</strong>
+
+            </h2>
+
+            <button style="margin-right:10px" class="btn btn-primary pull-right" onclick="addNewOrder()">New Order</button>
+
+        </div>
+
+    </div>
+
+
+
+    @*Receive All Database Data From Controller And Display Those Data In Client Side*@
+
+
+
+    @if (Model.Count() != 0)
+
+    {
+
+        foreach (var item in Model)
+
+        {
+
+            <div class="panel-body">
+
+                <table class="table table-striped table-responsive">
+
+                    <tbody>
+
+                        <tr>
+
+                            <td>Customer Name : @item.ad </td>
+
+                            <td>Address : @item.sehir </td>
+
+                            <td>Order Date : @item.tarih</td>
+
+                        </tr>
+
+                        <tr>
+
+                            <td colspan="3">
+
+                                <table class="table table-bordered">
+
+                                    <tbody>
+
+                                        <tr>
+
+                                            <th>Product</th>
+
+                                            <th>Quantity</th>
+
+                                            <th>Unit Price</th>
+
+                                            <th>Total</th>
+
+                                        </tr>
+
+                                        @{
+
+                                            var totalBill = 0;
+
+                                        }
+
+                                        @foreach (var order in item.TblSiparis)
+
+                                        {
+
+                                            <tr>
+
+                                                <td>@order.urun</td>
+
+                                                <td>@order.Adet</td>
+
+                                                <td>@order.Fiyat</td>
+
+                                                <td>@order.Toplam</td>
+
+                                            </tr>
+
+                                            totalBill = totalBill + @Convert.ToInt32(order.Toplam);
+
+                                        }
+
+                                    </tbody>
+
+                                </table>
+
+                                <span class="pull-right" style="margin-right:100px;"><strong>Total Bill :  </strong> @totalBill</span>
+
+                            </td>
+
+                        </tr>
+
+                    </tbody>
+
+                </table>
+
+            </div>
+
+        }
+
+    }
+
+    else
+
+    {
+
+        <div class="panel-body">
+
+            <h3 style="color:red;">Empty!</h3>
+
+        </div>
+
+
+
+    }
+
+</div>
+
+=> Adım2
+
+<div class="modal fade" id="newOrderModal">
+
+    <div class="modal-dialog modal-lg" style=" width: 900px !important;">
+
+        <div class="modal-content">
+
+            <div class="modal-header">
+
+                <a href="#" class="close" data-dismiss="modal">&times;</a>
+
+                <h4>Add New Order</h4>
+
+            </div>
+
+            <form id="NewOrderForm">
+
+                <div class="modal-body">
+
+                    @*Customer Details*@
+
+                    <h5 style="color:#ff6347">Customer Details</h5>
+
+                    <hr />
+
+                    <div class="form-horizontal">
+
+                        <input type="text" id="Musteri" />
+
+                        <div class="form-group">
+
+                            <label class="control-label col-md-2">
+
+                                Customer Name
+
+                            </label>
+
+                            <div class="col-md-4">
+
+                                <input type="text" id="ad" name="ad" placeholder="Customer Name" class="form-control" />
+
+                            </div>
+
+                            <label class="control-label col-md-2">
+
+                                Address
+
+                            </label>
+
+                            <div class="col-md-4">
+
+                                <input type="text" id="sehir" name="sehir" placeholder="Customer Address" class="form-control" />
+
+                            </div>
+
+                        </div>
+
+                    </div>
+
+
+
+                    @*Order Details*@
+
+                    <h5 style="margin-top:10px;color:#ff6347">Order Details</h5>
+
+                    <hr />
+
+                    <div class="form-horizontal">
+
+                        <input type="hidden" id="id" />
+
+                        <div class="form-group">
+
+                            <label class="control-label col-md-2">
+
+                                Product Name
+
+                            </label>
+
+                            <div class="col-md-4">
+
+                                <input type="text" id="urun" name="urun" placeholder="aa Name" class="form-control" />
+
+                            </div>
+
+                            <label class="control-label col-md-2">
+
+                                Price
+
+                            </label>
+
+                            <div class="col-md-4">
+
+                                <input type="number" id="Fiyat" name="Fiyat" placeholder="Product Price" class="form-control" />
+
+                            </div>
+
+                        </div>
+
+
+
+                        <div class="form-group">
+
+                            <label class="control-label col-md-2">
+
+                                Quantity
+
+                            </label>
+
+                            <div class="col-md-4">
+
+                                <input type="number" id="Adet" name="Adet" placeholder="Quantity" class="form-control" />
+
+                            </div>
+
+                            <div class="col-md-2 col-lg-offset-4">
+
+                                <a id="addToList" class="btn btn-primary">Add To List</a>
+
+                            </div>
+
+                        </div>
+
+
+
+                        <table id="detailsTable" class="table">
+
+                            <thead>
+
+                                <tr>
+
+                                    <th style="width:30%">Product</th>
+
+                                    <th style="width:20%">Unit Price</th>
+
+                                    <th style="width:15%">Quantity</th>
+
+                                    <th style="width:25%">Amount</th>
+
+                                    <th style="width:10%"></th>
+
+                                </tr>
+
+                            </thead>
+
+                            <tbody></tbody>
+
+                        </table>
+
+                    </div>
+
+                </div>
+
+                <div class="modal-footer">
+
+                    <button type="reset" class="btn btn-default" data-dismiss="modal">Close</button>
+
+                    <button id="saveOrder" type="submit" class="btn btn-danger">Save Order</button>
+
+                </div>
+
+            </form>
+
+        </div>
+
+    </div>
+
+</div>
+
+=> adım3 
+
+@section scripts{
+
+    <script>
+
+        //Show Modal.
+
+        function addNewOrder() {
+
+            $("#newOrderModal").modal();
+
+        }
+
+        //Add Multiple Order.
+
+        $("#addToList").click(function (e) {
+
+            e.preventDefault();
+
+
+
+            if ($.trim($("#urun").val()) == "" || $.trim($("#Fiyat").val()) == "" || $.trim($("#Adet").val()) == "") return;
+
+
+
+            var urun = $("#urun").val(),
+
+                Fiyat = $("#Fiyat").val(),
+
+                Adet = $("#Adet").val(),
+
+                detailsTableBody = $("#detailsTable tbody");
+
+
+
+            var productItem = '<tr><td>' + urun + '</td><td>' + Adet + '</td><td>' + Fiyat + '</td><td>' + (parseFloat(Fiyat) * parseInt(Adet)) + '</td><td><a data-itemId="0" href="#" class="deleteItem">Remove</a></td></tr>';
+
+            detailsTableBody.append(productItem);
+
+            clearItem();
+
+        });
+
+        //After Add A New Order In The List, Clear Clean The Form For Add More Order.
+
+        function clearItem() {
+
+            $("#urun").val('');
+
+            $("#Fiyat").val('');
+
+            $("#Adet").val('');
+
+        }
+
+        // After Add A New Order In The List, If You Want, You Can Remove It.
+
+        $(document).on('click', 'a.deleteItem', function (e) {
+
+            e.preventDefault();
+
+            var $self = $(this);
+
+            if ($(this).attr('data-itemId') == "0") {
+
+                $(this).parents('tr').css("background-color", "#ff6347").fadeOut(800, function () {
+
+                    $(this).remove();
+
+                });
+
+            }
+
+        });
+
+        //After Click Save Button Pass All Data View To Controller For Save Database
+
+        function saveOrder(data) {
+
+            return $.ajax({
+
+                contentType: 'application/json; charset=utf-8',
+
+                dataType: 'json',
+
+                type: 'POST',
+
+                url: "/Siparis/SaveOrder",
+
+                data: data,
+
+                success: function (result) {
+
+                    alert(result);
+
+                    location.reload();
+
+                },
+
+                error: function () {
+
+                    alert("Error!")
+
+                }
+
+            });
+
+        }
+
+        //Collect Multiple Order List For Pass To Controller
+
+        $("#saveOrder").click(function (e) {
+
+            e.preventDefault();
+
+
+
+            var orderArr = [];
+
+            orderArr.length = 0;
+
+
+
+            $.each($("#detailsTable tbody tr"), function () {
+
+                orderArr.push({
+
+                    urun: $(this).find('td:eq(0)').html(),
+
+                    Adet: $(this).find('td:eq(1)').html(),
+
+                    Fiyat: $(this).find('td:eq(2)').html(),
+
+                    Toplam: $(this).find('td:eq(3)').html()
+
+                });
+
+            });
+
+
+
+
+
+            var data = JSON.stringify({
+
+                ad: $("#ad").val(),
+
+                sehir: $("#sehir").val(),
+
+                order: orderArr
+
+            });
+
+
+
+            $.when(saveOrder(data)).then(function (response) {
+
+                console.log(response);
+
+            }).fail(function (err) {
+
+                console.log(err);
+
+            });
+
+        });
+
+    </script>
+
+}
+
+*************************************************************
+
+/***************  Yetkilendirme ****************************/
+
+=> Sayfalar arasında yetkilendirme vermek için Roller klasöründe ilgili sınıf oluşturuldu. WebConfig içerisinde de yetkilendirmenin olabilmesi için  <authentication>kısmının kapalı olan bölümünün altına aşağıdaki kod eklenmelidir.
+
+<roleManager enabled="true" defaultProvider="DenemeRoleProvider">
+      <providers>
+        <add name="DenemeRoleProvider" type="MvcOnlineTicariOtomasyon.Roller.AdminRoleProvider"/>
+      </providers>
+ </roleManager>
+
+
+
+

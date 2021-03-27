@@ -1,0 +1,14 @@
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Web;
+
+namespace MvcOnlineTicariOtomasyon.Models.Siniflar
+{
+    //GoogleChart'a veritabanından veri çekerek dinamik grafik oluşturmak içn tanımlandı
+    public class sinif2
+    {
+        public string urn { get; set; }
+        public int stk { get; set; }
+    }
+}

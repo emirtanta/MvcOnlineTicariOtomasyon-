@@ -1,0 +1,55 @@
+﻿@using MvcOnlineTicariOtomasyon.Models.Siniflar
+@model List<Urun>
+@{
+    ViewBag.Title = "Index";
+    Layout = "~/Views/Shared/_AdminLayout.cshtml";
+}
+
+<br />
+<h2>Ürün Listesi</h2>
+
+@* arama işlemi için tanımladık *@
+@using (Html.BeginForm("Index","Urun",FormMethod.Get))
+{
+    <p>
+        Ürün Adı: @Html.TextBox("p")
+        <input type="submit" value="Ara" />
+    </p>
+}
+<br />
+
+<table class="table table-bordered">
+    <tr>
+        <th>Ürün Adı</th>
+        <th>Stok</th>
+        <th>Marka</th>
+        <th>Alış Fiyat</th>
+        <th>Satış Fiyat</th>
+        <th>Kategori</th>
+        <th>Güncelle</th>
+        <th>Sil</th>
+        <th>Satış Yap</th>
+    </tr>
+    @foreach (var u in Model)
+    {
+<tr>
+    <td>@u.UrunAd</td>
+    <td>@u.Stok</td>
+    <td>@u.Marka</td>
+    <td>@u.AlisFiyati ₺</td>
+    <td>@u.SatisFiyati ₺</td>
+    <td>@u.Kategori.KategoriAd</td>
+    <td>
+        <a href="/Urun/UrunGetir/@u.Urunid" class="btn btn-success">Güncelle</a>
+    </td>
+    <td>
+        <a href="/Urun/UrunSil/@u.Urunid" class="btn btn-danger">Sil</a>
+    </td>
+    <td>
+        <a href="/Urun/SatisYap/@u.Urunid" class="btn btn-default" style="background-color:blue;color:white">Satış Yap</a>
+    </td>
+</tr>
+    }
+</table>
+
+<a href="/Urun/YeniUrun" class="btn btn-info">Yeni Ürün</a>
